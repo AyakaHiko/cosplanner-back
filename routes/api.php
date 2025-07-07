@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\ApiAuthenticatedController;
+use App\Http\Controllers\ImageController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -15,8 +17,12 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::middleware('auth:api')->group(function () {
+    Route::get('/user', [ApiAuthenticatedController::class, 'user']);
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::put('/profile', [ProfileController::class, 'update']);
+    Route::delete('/profile', [ProfileController::class, 'destroy']);
+    Route::post('/update-avatar', [ProfileController::class, 'updateAvatar']);
 });
 
 Route::middleware('guest')->group(function () {
@@ -25,4 +31,6 @@ Route::middleware('guest')->group(function () {
         Route::post('/login', 'login');
     });
 });
+Route::post('/image-store', [ImageController::class, 'store']);
+
 

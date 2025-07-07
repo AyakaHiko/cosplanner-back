@@ -21,6 +21,10 @@ class ApiAuthenticatedController extends Controller
             'email' => 'required|string|email',
             'password' => 'required|string',
         ]);
+        if ($request->boolean('remember')) {
+            $this->guard()->factory()->setTTL(60 * 24 * 180);
+        }
+
 
         if (!$token = $this->guard()->attempt($request->only('email', 'password'))) {
             return response()->json(['message' => 'Invalid credentials'], 401);
@@ -53,4 +57,14 @@ class ApiAuthenticatedController extends Controller
             'user' => $user
         ]);
     }
+    /**
+     * Get the authenticated User.
+     */
+    public function user(): JsonResponse
+    {
+        return response()->json([
+            'user' => auth()->user()
+        ]);
+    }
+
 }

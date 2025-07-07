@@ -3,31 +3,39 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\User;
+use App\Services\Interfaces\IImageService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    public function __construct(protected IImageService $imageService){
+
+    }
     /**
-     * Display the user's profile form.
+     * Get authenticated user's profile data.
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function edit(Request $request): Response
+    public function show(Request $request): JsonResponse
     {
-        return Inertia::render('Profile/Edit', [
+        return response()->json([
+            'user' => $request->user(),
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
         ]);
     }
 
     /**
-     * Update the user's profile information.
+     * Update authenticated user's profile information.
+     *
+     * @param ProfileUpdateRequest $request
+     * @return JsonResponse
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(ProfileUpdateRequest $request): JsonResponse
     {
         $request->user()->fill($request->validated());
 
@@ -37,27 +45,77 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
-        return Redirect::route('profile.edit');
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => $request->user()
+        ]);
     }
-
     /**
-     * Delete the user's account.
+     * Delete authenticated user's account.
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request): JsonResponse
     {
         $request->validate([
             'password' => ['required', 'current_password'],
         ]);
 
         $user = $request->user();
-
-        Auth::logout();
-
         $user->delete();
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        return response()->json([
+            'message' => 'Account deleted successfully'
+        ]);
+    }
+    public function updateAvatar(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'user_id' => 'sometimes|exists:users,id'
+        ]);
 
-        return Redirect::to('/');
+        if (!$request->hasFile('image')) {
+            return response()->json([
+                'message' => 'No image file provided'
+            ], 400);
+        }
+
+        if ($request->has('user_id')) {
+            if (!$request->user()->can('update-user-avatar')) {
+                return response()->json([
+                    'message' => 'Unauthorized to update other users avatars'
+                ], 403);
+            }
+            $targetUser = User::findOrFail($request->user_id);
+        } else {
+            $targetUser = $request->user();
+        }
+
+        if ($targetUser->avatar_path) {
+            $this->imageService->delete($targetUser->avatar_path);
+        }
+
+        $result = $this->imageService->upload(
+            $request->file('image'),
+            'avatar_' . $targetUser->id,
+            'profile-photos'
+        );
+
+        if (!$result['success']) {
+            return response()->json([
+                'message' => 'Failed to upload profile picture',
+                'error' => $result['error']
+            ], 500);
+        }
+
+        $targetUser->avatar_path = $result['data']['path'];
+        $targetUser->save();
+
+        return response()->json([
+            'message' => 'Profile picture updated successfully',
+            'user' => $targetUser
+        ]);
     }
 }
