@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:api')->group(function () {
     Route::get('/user', [ApiAuthenticatedController::class, 'user']);
     Route::get('/profile', [ProfileController::class, 'show']);
-    Route::put('/profile', [ProfileController::class, 'update']);
+    Route::patch('/profile', [ProfileController::class, 'update']);
     Route::delete('/profile', [ProfileController::class, 'destroy']);
     Route::post('/update-avatar', [ProfileController::class, 'updateAvatar']);
 });
