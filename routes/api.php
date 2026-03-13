@@ -23,6 +23,10 @@ Route::middleware('auth:api')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update']);
     Route::delete('/profile', [ProfileController::class, 'destroy']);
     Route::post('/update-avatar', [ProfileController::class, 'updateAvatar']);
+
+    // Cosplan CRUD
+    \App\Http\Controllers\CosplanController::class;
+    Route::apiResource('cosplans', \App\Http\Controllers\CosplanController::class);
 });
 
 Route::middleware('guest')->group(function () {
