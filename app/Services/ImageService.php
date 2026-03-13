@@ -5,13 +5,15 @@ namespace App\Services;
 use App\Services\Interfaces\IImageService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 use Exception;
 
 class ImageService implements IImageService
 {
     private string $disk = 's3';
 
-    public function upload(UploadedFile $file, string $title, string $path = 'images'): array
+    public function upload(UploadedFile $file, string $title, string $path = 'images', ?int $width = null, ?int $height = null): array
     {
         try {
             $extension = $file->getClientOriginalExtension();

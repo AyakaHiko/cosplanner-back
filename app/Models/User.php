@@ -24,6 +24,11 @@ class User extends Authenticatable implements JwtSubject
         'password',
     ];
 
+    public function avatar()
+    {
+        return $this->hasOne(UserAvatar::class);
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *

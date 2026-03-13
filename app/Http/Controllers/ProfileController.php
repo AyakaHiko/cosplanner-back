@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\User;
+use App\Models\UserAvatar;
 use App\Services\Interfaces\IImageService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\JsonResponse;
@@ -23,7 +24,7 @@ class ProfileController extends Controller
     public function show(Request $request): JsonResponse
     {
         return response()->json([
-            'user' => $request->user(),
+            'user' => $request->user()->load('avatar'),
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
         ]);
@@ -93,14 +94,22 @@ class ProfileController extends Controller
             $targetUser = $request->user();
         }
 
-        if ($targetUser->avatar_path) {
-            $this->imageService->delete($targetUser->avatar_path);
+        $targetUser->load('avatar');
+
+        if ($targetUser->avatar) {
+            $this->imageService->delete($targetUser->avatar->path);
+            if ($targetUser->avatar->preview_path) {
+                $this->imageService->delete($targetUser->avatar->preview_path);
+            }
+            $targetUser->avatar->delete();
         }
 
         $result = $this->imageService->upload(
             $request->file('image'),
             'avatar_' . $targetUser->id,
-            'profile-photos'
+            'profile-photos',
+            400,
+            400
         );
 
         if (!$result['success']) {
@@ -110,12 +119,22 @@ class ProfileController extends Controller
             ], 500);
         }
 
-        $targetUser->avatar_path = $result['data']['path'];
-        $targetUser->save();
+        $previewResult = $this->imageService->upload(
+            $request->file('image'),
+            'avatar_preview_' . $targetUser->id,
+            'profile-photos/previews',
+            150,
+            150
+        );
+
+        $targetUser->avatar()->create([
+            'path' => $result['data']['path'],
+            'preview_path' => $previewResult['success'] ? $previewResult['data']['path'] : null,
+        ]);
 
         return response()->json([
             'message' => 'Profile picture updated successfully',
-            'user' => $targetUser
+            'user' => $targetUser->load('avatar')
         ]);
     }
 }
