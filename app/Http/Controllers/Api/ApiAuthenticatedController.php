@@ -50,11 +50,14 @@ class ApiAuthenticatedController extends Controller
         ]);
 
         event(new Registered($user));
+        $token = $this->guard()->login($user);
 
-        Auth::login($user);
         return response()->json([
             'message' => 'User has been created',
-            'user' => $user
+            'user' => $user,
+            'access_token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => $this->guard()->factory()->getTTL() * 60,
         ]);
     }
     /**
@@ -66,5 +69,6 @@ class ApiAuthenticatedController extends Controller
             'user' => auth()->user()
         ]);
     }
+
 
 }
