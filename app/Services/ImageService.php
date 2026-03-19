@@ -18,7 +18,8 @@ class ImageService implements IImageService
         try {
             $extension = $file->getClientOriginalExtension();
             $filename = time() . '_' . $title . '.' . $extension;
-
+            $env = env('APP_ENV');
+            $path = $env.'/'.$path;
             if (!Storage::disk($this->disk)->exists($path)) {
                 Storage::disk($this->disk)->makeDirectory($path);
             }
