@@ -14,7 +14,10 @@ class CosplanController extends Controller
     {
         $user = $request->user();
 
-        $query = Cosplan::query()->where('user_id', $user->id)->orderByDesc('created_at');
+        $query = Cosplan::query()
+            ->with(['images', 'albums.images'])
+            ->where('user_id', $user->id)
+            ->orderByDesc('created_at');
 
         if ($request->boolean('paginate')) {
             return response()->json($query->paginate($request->integer('per_page', 15)));
@@ -26,7 +29,7 @@ class CosplanController extends Controller
     public function show(Request $request, Cosplan $cosplan)
     {
         $this->authorizeOwnership($request, $cosplan);
-        return response()->json($cosplan->load(['images', 'materials']));
+        return response()->json($cosplan->load(['images', 'materials', 'albums.images']));
     }
 
     public function store(Request $request)
