@@ -26,7 +26,7 @@ class CosplanController extends Controller
     public function show(Request $request, Cosplan $cosplan)
     {
         $this->authorizeOwnership($request, $cosplan);
-        return response()->json($cosplan);
+        return response()->json($cosplan->load(['images', 'materials']));
     }
 
     public function store(Request $request)
@@ -36,7 +36,6 @@ class CosplanController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
-            'image_path' => ['nullable', 'string', 'max:1024'],
             'deadline' => ['nullable', 'date'],
             'status' => ['required', Rule::in(['future', 'in_progress', 'ready'])],
         ]);
@@ -55,7 +54,6 @@ class CosplanController extends Controller
         $validated = $request->validate([
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
-            'image_path' => ['nullable', 'string', 'max:1024'],
             'deadline' => ['nullable', 'date'],
             'status' => ['sometimes', 'required', Rule::in(['future', 'in_progress', 'ready'])],
         ]);

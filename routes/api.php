@@ -25,8 +25,9 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/update-avatar', [ProfileController::class, 'updateAvatar']);
 
     // Cosplan CRUD
-    \App\Http\Controllers\CosplanController::class;
     Route::apiResource('cosplans', \App\Http\Controllers\CosplanController::class);
+    Route::apiResource('cosplans.images', \App\Http\Controllers\CosplanImageController::class)->only(['index', 'store', 'destroy']);
+    Route::apiResource('cosplans.materials', \App\Http\Controllers\CosplanMaterialController::class)->only(['index', 'store', 'destroy']);
 });
 
 Route::middleware('guest')->group(function () {
@@ -35,6 +36,5 @@ Route::middleware('guest')->group(function () {
         Route::post('/login', 'login');
     });
 });
-Route::post('/image-store', [ImageController::class, 'store']);
 
 
