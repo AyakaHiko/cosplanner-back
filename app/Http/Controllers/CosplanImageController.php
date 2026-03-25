@@ -59,7 +59,7 @@ class CosplanImageController extends Controller
         $albumId = $validated['album_id'] ?? null;
 
         if (!$albumId && !empty($validated['album_title'])) {
-            $album = $cosplan->albums()->create(['title' => $validated['album_title']]);
+            $album = $cosplan->albums()->firstOrCreate(['title' => $validated['album_title']]);
             $albumId = $album->id;
         }
 
@@ -85,7 +85,7 @@ class CosplanImageController extends Controller
         return response()->json($image, Response::HTTP_CREATED);
     }
 
-    public function destroy(CosplanImage $image)
+    public function destroy(Cosplan $cosplan, CosplanImage $image)
     {
         $this->authorizeOwnership($image->cosplan);
 
