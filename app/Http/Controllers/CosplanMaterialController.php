@@ -12,13 +12,13 @@ class CosplanMaterialController extends Controller
 {
     public function index(Cosplan $cosplan)
     {
-        $this->authorizeOwnership($cosplan);
+        $this->authorize('update', $cosplan);
         return response()->json($cosplan->materials);
     }
 
     public function store(Request $request, Cosplan $cosplan)
     {
-        $this->authorizeOwnership($cosplan);
+        $this->authorize('update', $cosplan);
 
         $validated = $request->validate([
             'type' => ['required', Rule::in(['link', 'note'])],
@@ -32,17 +32,11 @@ class CosplanMaterialController extends Controller
 
     public function destroy(CosplanMaterial $material)
     {
-        $this->authorizeOwnership($material->cosplan);
+        $this->authorize('update', $material->cosplan);
 
         $material->delete();
 
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    private function authorizeOwnership(Cosplan $cosplan): void
-    {
-        if (auth()->id() !== $cosplan->user_id) {
-            abort(Response::HTTP_FORBIDDEN, 'You do not have permission to access this resource.');
-        }
-    }
 }

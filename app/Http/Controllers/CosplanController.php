@@ -28,7 +28,7 @@ class CosplanController extends Controller
 
     public function show(Request $request, Cosplan $cosplan)
     {
-        $this->authorizeOwnership($request, $cosplan);
+        $this->authorize('view', $cosplan);
         return response()->json($cosplan->load(['images', 'materials', 'albums.images']));
     }
 
@@ -52,7 +52,7 @@ class CosplanController extends Controller
 
     public function update(Request $request, Cosplan $cosplan)
     {
-        $this->authorizeOwnership($request, $cosplan);
+        $this->authorize('update', $cosplan);
 
         $validated = $request->validate([
             'title' => ['sometimes', 'required', 'string', 'max:255'],
@@ -68,17 +68,11 @@ class CosplanController extends Controller
 
     public function destroy(Request $request, Cosplan $cosplan)
     {
-        $this->authorizeOwnership($request, $cosplan);
+        $this->authorize('delete', $cosplan);
 
         $cosplan->delete();
 
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    private function authorizeOwnership(Request $request, Cosplan $cosplan): void
-    {
-        if ($request->user()->id !== $cosplan->user_id) {
-            abort(Response::HTTP_FORBIDDEN, 'You do not have permission to access this resource.');
-        }
-    }
 }

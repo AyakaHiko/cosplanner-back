@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Services\Interfaces\IImageService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
 use Exception;
@@ -13,11 +14,12 @@ class ImageService implements IImageService
 {
     private string $disk = 's3';
 
-    public function upload(UploadedFile $file, string $title, string $path = 'images', ?int $width = null, ?int $height = null): array
+    public function upload(UploadedFile $file, string $title, string $path = 'images', bool $useTimestamp = true, ?int $width = null, ?int $height = null): array
     {
         try {
             $extension = $file->getClientOriginalExtension();
-            $filename = time() . '_' . $title . '.' . $extension;
+            $filenameBase = $useTimestamp ? (time() . '_' . $title) : $title;
+            $filename = $filenameBase . '.' . $extension;
             $env = env('APP_ENV');
             $path = $env.'/'.$path;
             if (!Storage::disk($this->disk)->exists($path)) {
@@ -50,6 +52,18 @@ class ImageService implements IImageService
             ];
         }
     }
+
+    public function generateFilename(string $type, ?int $albumId = null): string
+    {
+        $uniq = Str::uuid();
+
+        if ($type === 'album' && $albumId) {
+            return "album_{$albumId}_{$uniq}";
+        }
+
+        return "{$type}_{$uniq}";
+    }
+
     public function delete(string $path): array
     {
         try {

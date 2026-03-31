@@ -28,7 +28,8 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('cosplans', \App\Http\Controllers\CosplanController::class);
     Route::apiResource('cosplans.images', \App\Http\Controllers\CosplanImageController::class)->only(['index', 'store', 'destroy']);
     Route::apiResource('cosplans.materials', \App\Http\Controllers\CosplanMaterialController::class)->only(['index', 'store', 'destroy']);
-    Route::apiResource('cosplans.albums', \App\Http\Controllers\CosplanAlbumController::class)->only(['destroy']);
+    Route::post('cosplans/{cosplan}/albums/create-and-upload', [\App\Http\Controllers\CosplanAlbumController::class, 'createAndUpload']);
+    Route::apiResource('cosplans.albums', \App\Http\Controllers\CosplanAlbumController::class)->only(['store', 'destroy']);
 });
 
 Route::middleware('guest')->group(function () {

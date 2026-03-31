@@ -8,6 +8,7 @@ use App\Services\Interfaces\IImageService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class CosplanImageController extends Controller
@@ -18,30 +19,35 @@ class CosplanImageController extends Controller
 
     public function index(Cosplan $cosplan)
     {
-        $this->authorizeOwnership($cosplan);
+        $this->authorize('update', $cosplan);
         return response()->json($cosplan->images);
     }
 
     public function store(Request $request, Cosplan $cosplan)
     {
-        $this->authorizeOwnership($cosplan);
+        $this->authorize('update', $cosplan);
 
         $validated = $request->validate([
             'image' => ['required', 'image', 'max:5120'], // 5MB max
-            'type' => ['required', Rule::in(['main', 'reference', 'progress'])],
+            'type' => ['required', Rule::in(['main', 'album'])],
             'album_id' => ['nullable', 'exists:cosplan_albums,id'],
-            'album_title' => ['nullable', 'string', 'max:255'],
         ]);
 
-        if ($validated['type'] === 'main') {
+        $type = $validated['type'];
+        $albumId = $validated['album_id'] ?? null;
+        $filename = $this->imageService->generateFilename($type, $albumId);
+
+        $folder = "cosplans/{$cosplan->id}";
+        if ($type === 'main') {
             if ($cosplan->main_image_path) {
                 $this->imageService->delete($cosplan->main_image_path);
             }
 
             $result = $this->imageService->upload(
                 $request->file('image'),
-                'cosplan_' . $cosplan->id . '_main',
-                'cosplans/' . $cosplan->id
+                $filename,
+                $folder,
+                false
             );
 
             if (!$result['success']) {
@@ -56,17 +62,11 @@ class CosplanImageController extends Controller
             return response()->json($cosplan->fresh());
         }
 
-        $albumId = $validated['album_id'] ?? null;
-
-        if (!$albumId && !empty($validated['album_title'])) {
-            $album = $cosplan->albums()->firstOrCreate(['title' => $validated['album_title']]);
-            $albumId = $album->id;
-        }
-
         $result = $this->imageService->upload(
             $request->file('image'),
-            'cosplan_' . $cosplan->id . '_' . $validated['type'],
-            'cosplans/' . $cosplan->id
+            $filename,
+            $folder,
+            false
         );
 
         if (!$result['success']) {
@@ -78,7 +78,6 @@ class CosplanImageController extends Controller
 
         $image = $cosplan->images()->create([
             'path' => $result['data']['path'],
-            'type' => $validated['type'],
             'album_id' => $albumId,
         ]);
 
@@ -87,7 +86,7 @@ class CosplanImageController extends Controller
 
     public function destroy(Cosplan $cosplan, CosplanImage $image)
     {
-        $this->authorizeOwnership($image->cosplan);
+        $this->authorize('update', $cosplan);
 
         $this->imageService->delete($image->getRawOriginal('path') ?? $image->path);
         $image->delete();
@@ -95,10 +94,4 @@ class CosplanImageController extends Controller
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    private function authorizeOwnership(Cosplan $cosplan): void
-    {
-        if (auth()->id() !== $cosplan->user_id) {
-            abort(Response::HTTP_FORBIDDEN, 'You do not have permission to access this resource.');
-        }
-    }
 }
