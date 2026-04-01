@@ -23,8 +23,14 @@ class ProfileController extends Controller
      */
     public function show(Request $request): JsonResponse
     {
+        $user = $request->user()->load('avatar');
+        $user->future_count = $user->cosplans()->where('status', 'future')->count();
+        $user->in_progress_count = $user->cosplans()->where('status', 'in_progress')->count();
+        $user->ready_count = $user->cosplans()->where('status', 'ready')->count();
+        $user->registration_date = $user->created_at->format('d.m.Y');
+
         return response()->json([
-            'user' => $request->user()->load('avatar'),
+            'user' => $user,
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
         ]);

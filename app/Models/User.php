@@ -29,6 +29,11 @@ class User extends Authenticatable implements JwtSubject
         return $this->hasOne(UserAvatar::class);
     }
 
+    public function cosplans()
+    {
+        return $this->hasMany(Cosplan::class);
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *
