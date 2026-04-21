@@ -29,6 +29,7 @@ class User extends Authenticatable implements JwtSubject, MustVerifyEmail
         'name',
         'email',
         'password',
+        'role',
     ];
 
     public function avatar()

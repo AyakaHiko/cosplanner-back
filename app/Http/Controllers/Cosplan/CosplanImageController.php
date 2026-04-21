@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Cosplan;
+
+use App\Http\Controllers\Controller;
 
 use App\Models\Cosplan;
 use App\Models\CosplanImage;
