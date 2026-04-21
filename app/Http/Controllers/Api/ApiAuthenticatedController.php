@@ -75,6 +75,11 @@ class ApiAuthenticatedController extends Controller
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
+        $user = $this->guard()->user();
+        if (!$user->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Please verify your email address.'], 403);
+        }
+
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
@@ -102,14 +107,10 @@ class ApiAuthenticatedController extends Controller
             }
 
             event(new Registered($user));
-            $token = $this->guard()->login($user);
 
             return response()->json([
                 'message' => 'Verification email sent',
                 'user' => $user,
-                'access_token' => $token,
-                'token_type' => 'bearer',
-                'expires_in' => $this->guard()->factory()->getTTL() * 60,
             ]);
         }
 
@@ -120,14 +121,10 @@ class ApiAuthenticatedController extends Controller
         ]);
 
         event(new Registered($user));
-        $token = $this->guard()->login($user);
 
         return response()->json([
             'message' => 'User has been created',
             'user' => $user,
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => $this->guard()->factory()->getTTL() * 60,
         ]);
     }
     /**
