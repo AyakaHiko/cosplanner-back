@@ -8,13 +8,17 @@ use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\User;
 use App\Models\UserAvatar;
 use App\Services\Interfaces\IImageService;
+use App\Services\User\UserAvatarService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ProfileController extends Controller
 {
-    public function __construct(protected IImageService $imageService){
+    public function __construct(
+        protected IImageService $imageService,
+        protected UserAvatarService $avatarService
+    ){
 
     }
     /**
@@ -104,45 +108,18 @@ class ProfileController extends Controller
 
         $targetUser->load('avatar');
 
-        if ($targetUser->avatar) {
-            $this->imageService->delete($targetUser->avatar->path);
-            if ($targetUser->avatar->preview_path) {
-                $this->imageService->delete($targetUser->avatar->preview_path);
-            }
-            $targetUser->avatar->delete();
-        }
-
-        $result = $this->imageService->upload(
-            $request->file('image'),
-            'avatar_' . $targetUser->id,
-            'profile-photos',
-            400,
-            400
-        );
+        $result = $this->avatarService->updateAvatar($targetUser, $request->file('image'));
 
         if (!$result['success']) {
             return response()->json([
                 'message' => 'Failed to upload profile picture',
-                'error' => $result['error']
+                'error' => $result['error'] ?? 'Unknown error'
             ], 500);
         }
 
-        $previewResult = $this->imageService->upload(
-            $request->file('image'),
-            'avatar_preview_' . $targetUser->id,
-            'profile-photos/previews',
-            150,
-            150
-        );
-
-        $targetUser->avatar()->create([
-            'path' => $result['data']['path'],
-            'preview_path' => $previewResult['success'] ? $previewResult['data']['path'] : null,
-        ]);
-
         return response()->json([
             'message' => 'Profile picture updated successfully',
-            'user' => $targetUser->load('avatar')
+            'user' => $result['user']
         ]);
     }
 }

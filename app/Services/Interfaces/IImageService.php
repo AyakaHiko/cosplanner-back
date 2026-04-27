@@ -2,6 +2,7 @@
 
 namespace App\Services\Interfaces;
 
+use Illuminate\Http\File;
 use Illuminate\Http\UploadedFile;
 
 interface IImageService
@@ -9,7 +10,7 @@ interface IImageService
     /**
      * Upload an image file to storage
      *
-     * @param UploadedFile $file The file to upload
+     * @param UploadedFile|File $file The file to upload
      * @param string $title The title for the file
      * @param string $path The storage path (defaults to 'images')
      * @param bool $useTimestamp Whether to prefix filename with timestamp (default: true)
@@ -26,7 +27,7 @@ interface IImageService
      *     error?: string
      * }
      */
-    public function upload(UploadedFile $file, string $title, string $path = 'images', bool $useTimestamp = true, ?int $width = null, ?int $height = null): array;
+    public function upload(UploadedFile|File $file, string $title, string $path = 'images', bool $useTimestamp = true, ?int $width = null, ?int $height = null): array;
 
     /**
      * Generate a unique filename for a cosplan image based on type and album

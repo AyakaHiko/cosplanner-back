@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\Auth\GoogleAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
@@ -10,6 +11,13 @@ use Illuminate\Foundation\Auth\AuthenticatesUsers;
 class AuthController extends Controller
 {
     use AuthenticatesUsers;
+
+    protected $googleAuthService;
+
+    public function __construct(GoogleAuthService $googleAuthService)
+    {
+        $this->googleAuthService = $googleAuthService;
+    }
 
     public function login(Request $request): JsonResponse
     {
@@ -52,5 +60,14 @@ class AuthController extends Controller
     {
         $this->guard()->logout();
         return response()->json(['message' => 'Successfully logged out']);
+    }
+    public function googleCallback(Request $request): JsonResponse
+    {
+        try {
+            $data = $this->googleAuthService->handleCallback($request->credential);
+            return response()->json($data);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
     }
 }
