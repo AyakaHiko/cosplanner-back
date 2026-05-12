@@ -29,7 +29,9 @@ class User extends Authenticatable implements JwtSubject, MustVerifyEmail
         'name',
         'email',
         'password',
+        'email_verified_at',
         'role',
+        'google_id',
     ];
 
     public function avatar()

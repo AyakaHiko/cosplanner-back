@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Services\Interfaces\IImageService;
+use Illuminate\Http\File;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -14,10 +15,10 @@ class ImageService implements IImageService
 {
     private string $disk = 's3';
 
-    public function upload(UploadedFile $file, string $title, string $path = 'images', bool $useTimestamp = true, ?int $width = null, ?int $height = null): array
+    public function upload(UploadedFile|File $file, string $title, string $path = 'images', bool $useTimestamp = true, ?int $width = null, ?int $height = null): array
     {
         try {
-            $extension = $file->getClientOriginalExtension();
+            $extension = $file instanceof UploadedFile ? $file->getClientOriginalExtension() : $file->getExtension();
             $filenameBase = $useTimestamp ? (time() . '_' . $title) : $title;
             $filename = $filenameBase . '.' . $extension;
             $env = env('APP_ENV');
